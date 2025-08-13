@@ -33,13 +33,13 @@ Kraft web servers, as well as rendering templates programmatically.
     route_def/0
 ]).
 
--type body()      :: kraft_json:body_json() | cowboy_req:resp_body().
--type conn()      :: kraft_conn:conn().
--type headers()   :: #{binary() => iolist()}.
--type params()    :: kraft_conn:params().
--type response()  :: kraft_handler:response().
+-type body() :: kraft_json:body_json() | cowboy_req:resp_body().
+-type conn() :: kraft_conn:conn().
+-type headers() :: #{binary() => iolist()}.
+-type params() :: kraft_conn:params().
+-type response() :: kraft_handler:response().
 -type route_def() :: kraft_instance:route_def().
--type status()    :: kraft_conn:status().
+-type status() :: kraft_conn:status().
 
 %--- API -----------------------------------------------------------------------
 
@@ -54,9 +54,9 @@ automatically: template reloading, hot reloading, debug mode, etc. Check
 `m:kraft_dev` for more information.
 """.
 -spec start(Opts, Routes) -> Result when
-    Opts   :: #{
+    Opts :: #{
         mode => dev | prod,
-        app  => atom(),
+        app => atom(),
         port := pos_integer(),
         ssl_opts => [ranch_ssl:opt()]
     },
@@ -67,10 +67,10 @@ start(Opts, Routes) ->
     kraft_dev:maybe_start(Opts),
     App = detect_app(Opts),
     {ok, Ref} = kraft_instance:start(#{
-        app    => App,
+        app => App,
         routes => Routes,
-        owner  => Owner,
-        opts   => Opts
+        owner => Owner,
+        opts => Opts
     }),
     Ref.
 

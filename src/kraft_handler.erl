@@ -109,10 +109,8 @@ exec(Conn) ->
 -type response_body() :: {respond, kraft_conn:conn(), body() | kraft:status()}.
 -type response() :: response_body() | kraft_conn:conn().
 
-
 -doc "Module that implements the `kraft_handler` behaviour given by the user".
 -type handler() :: module().
-
 
 -callback exec(kraft:conn()) -> response().
 

@@ -1,6 +1,6 @@
 -module(kraft_rest).
 
--moduledoc """ 
+-moduledoc """
 REST API handler for Kraft framework.
 
 This module provides a simplified REST handler that automatically routes HTTP 

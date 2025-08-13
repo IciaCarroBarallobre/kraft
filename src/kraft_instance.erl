@@ -47,16 +47,15 @@ The routes are a list of route definitions. Check `t:kraft_instance:route_def/0`
 for more information.
 """.
 -type params() :: #{
-    app    := atom(),
+    app := atom(),
     routes => [route_def()],
-    owner  := pid(),
-    opts   := #{
+    owner := pid(),
+    opts := #{
         port := pos_integer(),
         ssl_opts => [ranch_ssl:opt()],
         mode => dev | prod
     }
 }.
-
 
 -doc """
 Route definition structure for mapping URLs to handlers.
@@ -79,12 +78,30 @@ Types:
 Check the spec for available options.
 """.
 -type route_def() ::
-    {Path :: binary() | string(), kraft_handler:handler(), kraft_state()} |
-    {Path :: binary() | string(), kraft_handler:handler(), kraft_state(), route_def_opts()} |
-    {Path :: binary() | string(), {ws, kraft_handler:handler()}, kraft_state()} |
-    {Path :: binary() | string(), {ws, kraft_handler:handler()}, kraft_state(), kraft_ws_opts()} |
-    {Path :: binary() | string(), kraft_static, kraft_state()} |
-    {Path :: binary() | string(), {cowboy, kraft_handler:handler()}, kraft_state()}.
+    {Path :: binary() | string(), kraft_handler:handler(), kraft_state()}
+    | {
+        Path :: binary() | string(),
+        kraft_handler:handler(),
+        kraft_state(),
+        route_def_opts()
+    }
+    | {
+        Path :: binary() | string(),
+        {ws, kraft_handler:handler()},
+        kraft_state()
+    }
+    | {
+        Path :: binary() | string(),
+        {ws, kraft_handler:handler()},
+        kraft_state(),
+        kraft_ws_opts()
+    }
+    | {Path :: binary() | string(), kraft_static, kraft_state()}
+    | {
+        Path :: binary() | string(),
+        {cowboy, kraft_handler:handler()},
+        kraft_state()
+    }.
 
 -type route_def_opts() :: #{
     type => rest | controller,

@@ -153,7 +153,8 @@ This function renders a template and creates a complete HTTP response
 with proper content-type headers. It's a convenience function that
 combines `render/3` with response headers.
 """.
--spec response(kraft_conn:conn(), file:name(), bbmustache:data()) -> kraft_conn:conn().
+-spec response(kraft_conn:conn(), file:name(), bbmustache:data()) ->
+    kraft_conn:conn().
 response(Conn0, Template, Context) ->
     Body = render(Conn0, Template, Context),
     Conn1 = kraft_conn:response_body(Conn0, Body),
