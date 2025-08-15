@@ -101,16 +101,12 @@ exec(Conn) ->
 %--- Types ---------------------------------------------------------------------
 
 -export_type([response/0]).
--export_type([handler/0]).
 
 -type body_raw() :: {raw, iodata()} | iodata().
 -type body() ::
     kraft_template:body_template() | kraft_json:body_json() | body_raw().
 -type response_body() :: {respond, kraft_conn:conn(), body() | kraft:status()}.
 -type response() :: response_body() | kraft_conn:conn().
-
--doc "Module that implements the `kraft_handler` behaviour given by the user".
--type handler() :: module().
 
 -callback exec(kraft:conn()) -> response().
 

@@ -13,7 +13,8 @@ activating hot reloading and file watching capabilities.
 ## See Also
 - `kraft:start/2` - High-level server startup
 - `kraft_dev` - Development mode
-- `kraft_handler` - Handler implementation guide
+- `kraft_handler` - HTTP Request Handler implementation guide
+- `kraft_ws` - WebSocket Handler implementation guide
 """.
 
 -behavior(gen_server).
@@ -63,9 +64,12 @@ Route definition structure for mapping URLs to handlers.
 ## Route Formats
 
 All of them contains `path`, `handler` and `state`.
-- Path is the URL path pattern (e.g., "/", "/blog/:blog_id/comment/:comment_id").
-- Handler is the module implementing the handler behaviour.
-- State is the initial state data passed to the handler.
+
+- `path` is the URL path pattern (e.g., `"/"`,
+  `"/blog/:blog_id/comment/:comment_id"`).
+- `handler` is the module implementing the handler behaviour or the logic part
+  of the application.
+- `state` is the initial state data passed to the handler.
 
 Some of them contains `options`.
 
@@ -73,33 +77,33 @@ Types:
 - **Standard Handler Route**: `{Path, Handler, State}` or `{Path, Handler, State, Options}`
 - **WebSocket Route**: `{Path, {ws, Handler}, State}` or `{Path, {ws, Handler}, State, WS_Options}`
 - **Static File Route**: `{Path, kraft_static, State}`
-- **Cowboy Handler Route**: `{Path, {cowboy, Handler}, State}`
+- **Cowboy Handler Route**: `{Path, {cowboy, Module}, State}`
 
 Check the spec for available options.
 """.
 -type route_def() ::
-    {Path :: binary() | string(), kraft_handler:handler(), kraft_state()}
+    {Path :: binary() | string(), module(), kraft_state()}
     | {
         Path :: binary() | string(),
-        kraft_handler:handler(),
+        module(),
         kraft_state(),
         route_def_opts()
     }
     | {
         Path :: binary() | string(),
-        {ws, kraft_handler:handler()},
+        {ws, module()},
         kraft_state()
     }
     | {
         Path :: binary() | string(),
-        {ws, kraft_handler:handler()},
+        {ws, module()},
         kraft_state(),
         kraft_ws_opts()
     }
     | {Path :: binary() | string(), kraft_static, kraft_state()}
     | {
         Path :: binary() | string(),
-        {cowboy, kraft_handler:handler()},
+        {cowboy, module()},
         kraft_state()
     }.
 

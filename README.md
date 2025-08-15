@@ -8,14 +8,19 @@ and template rendering, while your handlers focus solely on implementing
 domain-specific business logic without worrying about HTTP/WebSocket protocol
 details.
 
-Built on proven Erlang libraries like `cowboy` for HTTP/WebSocket server,
-`cowlib` for protocol parsing, `bbmustache` for template rendering, and
-`mapz` for data manipulation, Kraft provides a solid foundation for
-building robust web applications.
+Built on proven Erlang libraries like
+[cowboy](https://github.com/ninenines/cowboy/tree/master) for HTTP/WebSocket
+server, [cowlib](https://github.com/ninenines/cowlib) for protocol parsing,
+[bbmustache](https://github.com/soranoba/bbmustache) for template rendering,
+and [mapz](https://github.com/eproxus/mapz) for data manipulation, Kraft
+provides a solid foundation for building robust web applications.
 
-> 📎 **Note**: Check the minimum required OTP version rebar.config.
+> 📎 **Note**: Check the minimum required OTP version `rebar.config`.
 
-## Quick Start (REST API example)
+## Quick Start
+
+Kraft includes many [examples](#examples), but in this guide we’ll start with a
+simple REST setup:
 
 1. Add the dependency to `rebar.config`:
 
@@ -74,18 +79,13 @@ First, we initialize Kraft with `kraft:start/2` using route definitions.
 For more information on defining routes, see the documentation
 for `t:kraft_instance:route_def/0`.
 
-Once Kraft is initialized, there are two main types of requests: **HTTP** and **WebSocket**.
+Once Kraft is initialized, there are tree main types of handlers of the requests:
 
-### HTTP Requests
+### Kraft HTTP Handlers
 
-When a client sends an HTTP request,
-[`Cowboy`](https://ninenines.eu/docs/en/cowboy/) (the HTTP server) receives it
-and passes it to `m:kraft_instance`, which compiles route definitions and
-finds the matching handler. `m:kraft_instance` then dispatches the request
-to `m:kraft_handler`, which creates a connection object and calls your specific
-handler module, `YourHandler`.
-
-You only need to implement `YourHandler` logic - Kraft handles all the HTTP infrastructure, routing, and response processing.
+The `m:kraft_handler` module creates a connection object and calls your specific
+handler module, `YourHandler`. You only need to implement `YourHandler` logic -
+Kraft handles all the HTTP infrastructure, routing, and response processing.
 
 Here's how an HTTP request flows through the system:
 
@@ -111,58 +111,71 @@ sequenceDiagram
 
 **HTTP Handler Types:**
 
-- **Standard Handler** (`m:kraft_handler` behaviour): Most flexible option, offering full control over request and response handling
-- **Controller Handler** (`m:kraft_controller` behaviour) - Designed for template-based HTML page rendering
-- **REST Handler** (`m:kraft_rest` behaviour) - Implements RESTful API endpoints with automatic HTTP method routing
+- **Standard Handler** (`m:kraft_handler` behaviour): Most flexible option,
+  offering full control over request and response handling
+- **Controller Handler** (`m:kraft_controller` behaviour) - Designed for
+  template-based HTML page rendering
+- **REST Handler** (`m:kraft_rest` behaviour) - Implements RESTful API endpoints
+  with automatic HTTP method routing
 
-### Websockets
+### Kraft Websocket Handlers
 
-WebSocket modules use `m:kraft_ws_util` as their foundation. This utility module implements the `cowboy_websocket` behaviour,
-providing a clean abstraction while maintaining the callback structure and
-logic you need. The specialized WebSocket modules (`m:kraft_ws`, `m:kraft_ws_json`, `m:kraft_ws_jsonrpc`) add protocol-specific
-functionality so you can focus on your business logic instead of WebSocket implementation details.
+Kraft does NOT provide generic WebSocket handlers. Instead, it provides
+`m:kraft_ws_util`, which implements the `cowboy_websocket` behaviour.
 
-```mermaid
-sequenceDiagram
-    participant Client
-    participant Cowboy
-    participant kraft_ws_util
-    participant YourWSHandler
-    participant kraft_instance
-    
-    Client->>Cowboy: WebSocket Upgrade Request
-    Cowboy->>kraft_instance: Route to WebSocket Handler
-    kraft_instance->>kraft_ws_util: Initialize WebSocket
-    kraft_ws_util->>YourWSHandler: init/2 callback
-    
-    Note over YourWSHandler: Initialize connection state
-    
-    YourWSHandler->>kraft_ws_util: Return initial state
-    kraft_ws_util->>Cowboy: WebSocket connection established
-    
-    loop Message Exchange
-        Client->>Cowboy: WebSocket Message
-        Cowboy->>kraft_ws_util: Forward message
-        kraft_ws_util->>YourWSHandler: handle/2 callback
-        YourWSHandler->>kraft_ws_util: Return response commands
-        kraft_ws_util->>Cowboy: Send response
-        Cowboy->>Client: WebSocket response
-    end
-    
-    Client->>Cowboy: Close connection
-    Cowboy->>kraft_ws_util: Connection closed
-    kraft_ws_util->>YourWSHandler: terminate/3 callback
-```
+The utils module is used by the specialized WebSocket modules
+(`m:kraft_ws` for raw responses, `m:kraft_ws_json` for json responses,
+`m:kraft_ws_jsonrpc` for json-rpc responses) who add protocol-specific
+functionality so you can focus on your business logic instead of WebSocket
+implementation details.
 
 **WebSocket Types:**
 
 - **`m:kraft_ws`**: Raw WebSocket handler for binary or text messages
 - **`m:kraft_ws_json`**: JSON message handler with automatic parsing/encoding
-- **`m:kraft_ws_jsonrpc`**: JSON-RPC 2.0 protocol handler for structured RPC calls
+- **`m:kraft_ws_jsonrpc`**: JSON-RPC 2.0 protocol handler for structured RPC
+  calls
+
+### Cowboy
+
+Kraft allows you to use any Cowboy protocol or behaviour directly in your routes.
+This is useful when you need specific Cowboy features, custom protocols, or want
+to integrate existing Cowboy-based systems.
+
+Cowboy comes with three main handler types you can use directly:
+
+- [cowboy_rest](https://ninenines.eu/docs/en/cowboy/2.13/guide/rest_handlers/):
+  For custom REST API implementations
+- [cowboy_websocket](https://ninenines.eu/docs/en/cowboy/2.13/guide/ws_handlers/):
+  For custom WebSocket handling
+- [cowboy_loop](https://ninenines.eu/docs/en/cowboy/2.13/guide/loop_handlers/):
+  For long-running operations
+
+To use a Cowboy handler directly in your routes:
+
+```erlang
+Routes = [
+    % Custom REST API endpoint
+    {"/api/custom/:resource", {cowboy, your_rest_handler}, #{}},
+    
+    % Custom WebSocket endpoint
+    {"/ws/custom", {cowboy, your_ws_handler}, #{}},
+    
+    % Long-running operation
+    {"/long-task", {cowboy, your_loop_handler}, #{
+        opts => #{idle_timeout => 60000}
+    }}
+].
+
+kraft:start(#{port => 8080}, Routes).
+```
+
+Your handler module must implement the appropriate Cowboy behaviour.
 
 ## Examples
 
-Explore kraft [examples](https://github.com/eproxus/kraft/tree/main/examples) by downloading the repo and starting the example shell:
+Explore kraft [examples](https://github.com/eproxus/kraft/tree/main/examples)
+by downloading the repo and starting the example shell:
 
 ```sh
 rebar3 as example shell
@@ -170,15 +183,18 @@ rebar3 as example shell
 
 Then navigate to http://localhost:8090 to browse the available examples:
 
-- 📝**Blog**: Template system with dynamic routing, layouts, partials, and ETS-based content storage.
+- 📝**Blog**: Template system with dynamic routing, layouts, partials, and
+  ETS-based content storage.
 - 💬 **Chat**: Real-time WebSocket chat with JSON handling and HTMX integration.
 - 🎯**REST API**: JSON API with automatic HTTP method routing and form processing.
 - ✅**Todo**: CRUD app with HTMX, persistent storage, and atomic operations.
-- 🔌**WebSockets**: Raw, JSON, and JSON-RPC 2.0 protocol implementations with live demos for each protocol type.
+- 🔌**WebSockets**: Raw, JSON, and JSON-RPC 2.0 protocol implementations with
+  live demos for each protocol type.
 
 ## Documentation
 
-📚 Generate searchable documentation using [ex_doc](https://github.com/elixir-lang/ex_doc):
+📚 Generate searchable documentation using
+[ex_doc](https://github.com/elixir-lang/ex_doc):
 
 ```bash
 # Generate HTML documentation
@@ -192,7 +208,9 @@ open doc/index.html
 
 ### Code Formatting
 
-📐 Kraft uses [erlfmt](https://github.com/WhatsApp/erlfmt) — the official Erlang code formatter from WhatsApp — to ensure consistent code style across the project.
+📐 Kraft uses [erlfmt](https://github.com/WhatsApp/erlfmt) — the official Erlang
+code formatter from WhatsApp — to ensure consistent code style across the
+project.
 
 Format your code using Rebar3:
 
@@ -213,8 +231,11 @@ Enable the included Git pre-commit hook to automatically check code formatting:
 git config core.hooksPath .githooks
 ```
 
-This hook will validate your code formatting before each commit, ensuring code quality.
+This hook will validate your code formatting before each commit, ensuring code
+quality.
 
 ---
 
-*Need help? Browse the [examples](#examples) or the [documentation](#documentation), or open an [issue](https://github.com/eproxus/kraft/issues) on GitHub!*
+*Need help? Browse the [examples](#examples) or the
+[documentation](#documentation), or open an
+[issue](https://github.com/eproxus/kraft/issues) on GitHub!*
